@@ -1,0 +1,5 @@
+{
+  "name": "Trò Chơi Giải Đố Trivia",
+  "description": "Một trò chơi giải đố tương tác, nơi người dùng có thể chọn một chủ đề và độ khó, sau đó trả lời một loạt câu hỏi trắc nghiệm được tạo ra bởi AI.",
+  "requestFramePermissions": []
+}
