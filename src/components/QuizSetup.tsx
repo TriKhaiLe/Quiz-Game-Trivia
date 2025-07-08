@@ -1,16 +1,15 @@
 
 import React, { useState } from 'react';
-import { Difficulty } from '../types';
 import { BrainIcon } from './icons/BrainIcon';
 
 interface QuizSetupProps {
-  onStartGame: (topic: string, difficulty: Difficulty) => void;
+  onStartGame: (topic: string, difficulty: number) => void;
   error: string | null;
 }
 
 const QuizSetup: React.FC<QuizSetupProps> = ({ onStartGame, error }) => {
   const [topic, setTopic] = useState('');
-  const [difficulty, setDifficulty] = useState<Difficulty>(Difficulty.Medium);
+  const [difficulty, setDifficulty] = useState<number>(5);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,21 +47,17 @@ const QuizSetup: React.FC<QuizSetupProps> = ({ onStartGame, error }) => {
         </div>
         <div>
           <label htmlFor="difficulty" className="block text-sm font-medium text-slate-300 mb-2">
-            Độ khó
+            Độ khó: <span className="font-bold text-indigo-400">{difficulty}</span>/10
           </label>
-          <select
+          <input
+            type="range"
             id="difficulty"
+            min="1"
+            max="10"
             value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition appearance-none"
-            style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-          >
-            {Object.values(Difficulty).map((level) => (
-              <option key={level} value={level} className="bg-slate-800 text-white">
-                {level.charAt(0).toUpperCase() + level.slice(1)}
-              </option>
-            ))}
-          </select>
+            onChange={(e) => setDifficulty(Number(e.target.value))}
+            className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-500"
+          />
         </div>
         <button
           type="submit"

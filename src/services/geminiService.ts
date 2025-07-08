@@ -1,12 +1,13 @@
-import { type QuizQuestion, Difficulty } from '../types';
+import { type QuizQuestion } from '../types';
 import { API_BASE_URL } from './apiConfig';
 
 // Gọi API backend để lấy câu hỏi
-export const generateQuizQuestions = async (topic: string, difficulty: Difficulty): Promise<QuizQuestion[]> => {
+export const generateQuizQuestions = async (topic: string, difficulty: number): Promise<QuizQuestion[]> => {
+  const difficultyStr = `${difficulty}/10 (trong đó 1 là dễ nhất và 10 là khó nhất)`;
   const response = await fetch(`${API_BASE_URL}/api/quiz/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ topic, difficulty }),
+    body: JSON.stringify({ topic, difficulty: difficultyStr }),
   });
   if (!response.ok) {
     const errorText = await response.text();

@@ -16,56 +16,55 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd }) => {
   const [isAnswered, setIsAnswered] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
-  const handleNextQuestion = useCallback(() => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer(null);
-      setIsAnswered(false);
-    } else {
-      onGameEnd(userAnswers);
-    }
-  }, [currentQuestionIndex, questions.length, onGameEnd, userAnswers]);
-  
   const handleSelectAnswer = (answer: string) => {
     if (isAnswered) return;
 
     setIsAnswered(true);
     setSelectedAnswer(answer);
     setUserAnswers(prev => [...prev, answer]);
-
-    setTimeout(() => {
-      handleNextQuestion();
-    }, 1500);
   };
+  
+  const handleNextQuestion = useCallback(() => {
+    if (isLastQuestion) {
+      onGameEnd(userAnswers);
+    } else {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer(null);
+      setIsAnswered(false);
+    }
+  }, [isLastQuestion, onGameEnd, userAnswers]);
   
   useEffect(() => {
     const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
-      const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+      // Progress reflects the number of *answered* questions.
+      const progress = (userAnswers.length / questions.length) * 100;
       progressBar.style.width = `${progress}%`;
     }
-  }, [currentQuestionIndex, questions.length]);
+  }, [userAnswers.length, questions.length]);
 
 
   const getButtonClass = (option: string) => {
     if (!isAnswered) {
-      return 'bg-slate-700 hover:bg-slate-600';
+      return 'bg-slate-700 hover:bg-slate-600 border-slate-600 hover:border-indigo-500';
     }
     const isCorrect = option === currentQuestion.correctAnswer;
     const isSelected = option === selectedAnswer;
 
     if (isCorrect) {
-      return 'bg-green-500/80 scale-105';
+      return 'bg-green-500/80 scale-105 border-green-400';
     }
     if (isSelected && !isCorrect) {
-      return 'bg-red-500/80';
+      return 'bg-red-500/80 border-red-400';
     }
-    return 'bg-slate-700 opacity-50';
+    return 'bg-slate-700 opacity-50 border-slate-700';
   };
   
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in flex flex-col justify-between min-h-[420px]">
+      <div>
         <div className="mb-6">
             <p className="text-sm text-indigo-300 font-medium">Câu hỏi {currentQuestionIndex + 1} trên {questions.length}</p>
             <div className="w-full bg-slate-700 rounded-full h-2.5 mt-2">
@@ -81,7 +80,7 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd }) => {
                     key={index}
                     onClick={() => handleSelectAnswer(option)}
                     disabled={isAnswered}
-                    className={`p-4 rounded-lg text-left font-medium transition-all duration-300 flex items-center justify-between ${getButtonClass(option)}`}
+                    className={`p-4 rounded-lg text-left font-medium transition-all duration-300 flex items-center justify-between border-2 ${getButtonClass(option)}`}
                 >
                     <span>{option}</span>
                     {isAnswered && option === currentQuestion.correctAnswer && <CheckIcon className="h-6 w-6 text-white" />}
@@ -89,6 +88,18 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd }) => {
                 </button>
             ))}
         </div>
+      </div>
+        
+      <div className="mt-8 flex justify-end h-14">
+        {isAnswered && (
+            <button
+                onClick={handleNextQuestion}
+                className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-fade-in"
+            >
+                {isLastQuestion ? 'Xem kết quả' : 'Câu tiếp theo'}
+            </button>
+        )}
+      </div>
     </div>
   );
 };

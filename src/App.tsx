@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { type GameState, type QuizQuestion, Difficulty } from './types';
+import { type GameState, type QuizQuestion } from './types';
 import QuizSetup from './components/QuizSetup';
 import QuizGame from './components/QuizGame';
 import QuizResults from './components/QuizResults';
@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStartGame = useCallback(async (topic: string, difficulty: Difficulty) => {
+  const handleStartGame = useCallback(async (topic: string, difficulty: number) => {
     setGameState('loading');
     setError(null);
     try {
