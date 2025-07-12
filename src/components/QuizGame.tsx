@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { QuizQuestion } from '../types';
-import { CheckIcon } from './icons/CheckIcon';
-import { XIcon } from './icons/XIcon';
+import { CheckIcon } from '../icons/CheckIcon';
+import { XIcon } from '../icons/XIcon';
 
 interface QuizGameProps {
   questions: QuizQuestion[];
@@ -23,27 +22,30 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd }) => {
 
     setIsAnswered(true);
     setSelectedAnswer(answer);
-    setUserAnswers(prev => [...prev, answer]);
   };
   
   const handleNextQuestion = useCallback(() => {
+    // This state update needs to be captured for onGameEnd.
+    // So we create the new list of answers first.
+    const newAnswers = [...userAnswers, selectedAnswer!];
+    setUserAnswers(newAnswers);
+
     if (isLastQuestion) {
-      onGameEnd(userAnswers);
+      onGameEnd(newAnswers);
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setIsAnswered(false);
     }
-  }, [isLastQuestion, onGameEnd, userAnswers]);
+  }, [isLastQuestion, onGameEnd, userAnswers, selectedAnswer]);
   
   useEffect(() => {
     const progressBar = document.getElementById('progress-bar');
     if (progressBar) {
-      // Progress reflects the number of *answered* questions.
-      const progress = (userAnswers.length / questions.length) * 100;
+      const progress = ((currentQuestionIndex) / questions.length) * 100;
       progressBar.style.width = `${progress}%`;
     }
-  }, [userAnswers.length, questions.length]);
+  }, [currentQuestionIndex, questions.length]);
 
 
   const getButtonClass = (option: string) => {

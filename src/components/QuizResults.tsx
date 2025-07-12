@@ -1,9 +1,8 @@
-
 import React from 'react';
 import type { QuizQuestion } from '../types';
-import { CheckIcon } from './icons/CheckIcon';
-import { XIcon } from './icons/XIcon';
-import { TrophyIcon } from './icons/TrophyIcon';
+import { CheckIcon } from '../icons/CheckIcon';
+import { XIcon } from '../icons/XIcon';
+import { TrophyIcon } from '../icons/TrophyIcon';
 
 
 interface QuizResultsProps {
