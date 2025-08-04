@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import type { AuthContextType, User, ViewState } from '../types';
-import { USE_MOCK_AUTH } from './config';
-import { mockAuthService } from './authService';
+// import { USE_MOCK_AUTH } from './config';
+// import { mockAuthService } from './authService';
 
 // UNCOMMENT THIS BLOCK TO USE REAL AUTH
 import { supabaseAuthService } from '../services/supabaseService';
@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     initializeAuth();
 
-    const { data: authListener } = supabaseAuthService.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabaseAuthService.onAuthStateChange((_event) => {
         // This handles session changes, like after a password recovery or OAuth redirect
         initializeAuth();
     });

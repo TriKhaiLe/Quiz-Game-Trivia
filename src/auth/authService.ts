@@ -22,7 +22,7 @@ export const mockAuthService = {
     return JSON.parse(session);
   },
 
-  async login(email: string, password: string): Promise<{ user: User }> {
+  async login(email: string): Promise<{ user: User }> {
     const users = getMockUsers();
     const user = users.find(u => u.email === email);
     
@@ -35,7 +35,7 @@ export const mockAuthService = {
     return { user };
   },
 
-  async signup(email: string, password: string, username: string, avatarId: string): Promise<{ user: User }> {
+  async signup(email: string, username: string, avatarId: string): Promise<{ user: User }> {
     const users = getMockUsers();
     if (users.some(u => u.email === email)) {
       throw new Error('Email này đã được sử dụng.');
