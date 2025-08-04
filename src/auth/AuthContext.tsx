@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import type { AuthContextType, User, ViewState } from '../types';
 import { USE_MOCK_AUTH } from './config';
 import { mockAuthService } from './authService';
@@ -82,41 +82,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // --- REAL AUTH SERVICE (SUPABASE + .NET API) ---
   // UNCOMMENT THIS BLOCK AND COMMENT OUT THE MOCK BLOCK ABOVE
   
+  const hasFetchedProfile = useRef(false);
   const initializeAuth = useCallback(async () => {
     try {
+      if (hasFetchedProfile.current) {
+        setLoading(false);
+        return;
+      }
       const session = await supabaseAuthService.getCurrentSession();
       if (session?.user) {
         const token = session.access_token;
         try {
-            const profile = await apiService.getProfile(token);
-            // Profile exists, user is fully registered
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              username: profile.username,
-              avatarId: profile.avatarId
-            });
-            setView('game');
+          const profile = await apiService.getProfile(token);
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            username: profile.username,
+            avatarId: profile.avatarId
+          });
+          setView('game');
+          hasFetchedProfile.current = true;
         } catch (error) {
-            // This likely means a 404, user needs to set up their profile
-            console.warn("Profile not found, directing to setup.");
-            setUser({ // Create a temporary user object
-                id: session.user.id,
-                email: session.user.email!,
-                username: '',
-                avatarId: ''
-            });
-            setView('profile-setup');
+          // This likely means a 404, user needs to set up their profile
+          console.warn("Profile not found, directing to setup.");
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            username: '',
+            avatarId: ''
+          });
+          setView('profile-setup');
+          hasFetchedProfile.current = true;
         }
       } else {
-        // No user session
         setUser(null);
         setView('game');
+        hasFetchedProfile.current = false;
       }
     } catch (e) {
       console.error("Auth initialization failed", e);
       setUser(null);
       setView('game');
+      hasFetchedProfile.current = false;
     } finally {
       setLoading(false);
     }
