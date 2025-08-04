@@ -1,7 +1,7 @@
 // UNCOMMENT THIS ENTIRE FILE TO USE
 
 // Make sure to set this in your environment variables (.env file)
-const API_BASE_URL = import.meta.env.API_BASE_URL || 'https://localhost:7195';
+import { API_BASE_URL } from './apiConfig';
 
 interface ProfileData {
   username: string;
