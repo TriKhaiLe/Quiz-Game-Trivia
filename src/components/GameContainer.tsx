@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import type { GameState, QuizQuestion } from '../types';
 import QuizSetup from './QuizSetup';
 import QuizGame from './QuizGame';
@@ -12,12 +12,22 @@ const GameContainer: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleStartGame = useCallback(async (topic: string, difficulty: number) => {
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setGameState('loading');
     setError(null);
     try {
       const quizData = await generateQuizQuestions(topic, difficulty);
+      
+      if (controller.signal.aborted) {
+        console.log("Generation was cancelled by user. Ignoring results.");
+        return;
+      }
+
       if (quizData && quizData.length > 0) {
         setQuestions(quizData);
         setUserAnswers([]);
@@ -26,6 +36,11 @@ const GameContainer: React.FC = () => {
         throw new Error("Không thể tạo câu hỏi. Vui lòng thử lại với chủ đề khác.");
       }
     } catch (err) {
+      if (controller.signal.aborted) {
+        console.log("Generation was cancelled by user. Ignoring error.");
+        return;
+      }
+
       const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.";
       setError(errorMessage);
       setGameState('setup');
@@ -44,10 +59,18 @@ const GameContainer: React.FC = () => {
     setError(null);
   }, []);
 
+  const handleCancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setGameState('setup');
+    setError(null);
+  }, []);
+
   const renderContent = () => {
     switch (gameState) {
       case 'loading':
-        return <Loader message="Đang tạo bộ câu hỏi, vui lòng chờ..." />;
+        return <Loader message="Đang tạo bộ câu hỏi, vui lòng chờ..." onCancel={handleCancelGeneration} />;
       case 'playing':
         return <QuizGame questions={questions} onGameEnd={handleGameEnd} />;
       case 'results':
