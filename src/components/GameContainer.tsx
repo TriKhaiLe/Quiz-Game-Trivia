@@ -21,7 +21,7 @@ const GameContainer: React.FC = () => {
     setGameState('loading');
     setError(null);
     try {
-      const quizData = await generateQuizQuestions(topic, difficulty);
+      const quizData = await generateQuizQuestions(topic, difficulty, { signal: controller.signal });
       
       if (controller.signal.aborted) {
         console.log("Generation was cancelled by user. Ignoring results.");
@@ -62,6 +62,7 @@ const GameContainer: React.FC = () => {
   const handleCancelGeneration = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
+      console.log("Quiz generation cancelled by user.");
     }
     setGameState('setup');
     setError(null);
