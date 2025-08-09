@@ -13,9 +13,16 @@ const GameContainer: React.FC = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<string>('');
+  const [currentDifficulty, setCurrentDifficulty] = useState<number>(0);
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   const handleStartGame = useCallback(async (topic: string, difficulty: number) => {
+    logEvent('start_game', { 'topic': topic, 'difficulty': difficulty });
+    setCurrentTopic(topic);
+    setCurrentDifficulty(difficulty);
+
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -75,9 +82,10 @@ const GameContainer: React.FC = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+    logEvent('cancel_quiz_generation', { 'topic': currentTopic, 'difficulty': currentDifficulty });
     setGameState('setup');
     setError(null);
-  }, []);
+  }, [currentTopic, currentDifficulty]);
 
   const renderContent = () => {
     switch (gameState) {
