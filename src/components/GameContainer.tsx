@@ -6,6 +6,7 @@ import QuizResults from './QuizResults';
 import Loader from './common/Loader';
 import Header from './common/Header';
 import { generateQuizQuestions } from '../services/geminiService';
+import { logEvent } from '../services/analyticsService';
 
 const GameContainer: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>('setup');
@@ -50,7 +51,18 @@ const GameContainer: React.FC = () => {
   const handleGameEnd = useCallback((answers: string[]) => {
     setUserAnswers(answers);
     setGameState('results');
-  }, []);
+
+    // Tính điểm bằng cách so sánh câu trả lời của người dùng với câu trả lời đúng
+    // Hàm reduce thực hiện việc tính điểm bằng cách cộng dồn điểm cho mỗi câu trả lời đúng
+    const score = questions.reduce((acc, question, index) => {
+        return question.correctAnswer === answers[index] ? acc + 1 : acc;
+    }, 0);
+
+    logEvent('game_end', {
+        score: score,
+        total_questions: questions.length,
+    });
+  }, [questions]);
 
   const handlePlayAgain = useCallback(() => {
     setGameState('setup');
@@ -62,7 +74,6 @@ const GameContainer: React.FC = () => {
   const handleCancelGeneration = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
-      console.log("Quiz generation cancelled by user.");
     }
     setGameState('setup');
     setError(null);

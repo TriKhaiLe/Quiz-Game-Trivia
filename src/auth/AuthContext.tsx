@@ -1,11 +1,8 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import type { AuthContextType, User, ViewState } from '../types';
-// import { USE_MOCK_AUTH } from './config';
-// import { mockAuthService } from './authService';
-
-// UNCOMMENT THIS BLOCK TO USE REAL AUTH
 import { supabaseAuthService } from '../services/supabaseService';
 import { apiService } from '../services/apiService';
+import { logEvent } from '../services/analyticsService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -13,74 +10,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewState>('game');
-
-  // --- MOCK AUTH SERVICE ---
-  // const authService = mockAuthService;
-
-  // const initializeAuth = useCallback(async () => {
-  //   try {
-  //     const currentUser = await authService.getCurrentUser();
-  //     if (currentUser) {
-  //       setUser(currentUser);
-  //       if (!currentUser.username || !currentUser.avatarId) {
-  //           setView('profile-setup');
-  //       } else {
-  //           setView('game');
-  //       }
-  //     } else {
-  //       setView('game');
-  //     }
-  //   } catch (e) {
-  //     console.error("Auth initialization failed", e);
-  //     setView('game');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [authService]);
-
-  // useEffect(() => {
-  //   initializeAuth();
-  // }, [initializeAuth]);
-
-  // const login = async (email: string, password: string) => {
-  //   const { user } = await authService.login(email, password);
-  //   setUser(user);
-  //   setView('game');
-  // };
-
-  // const signup = async (email: string, password: string, username: string, avatarId: string) => {
-  //   const { user } = await authService.signup(email, password, username, avatarId);
-  //   setUser(user);
-  //   setView('game');
-  // };
-
-  // const loginWithGoogle = async () => {
-  //   const { user, isNewUser } = await authService.loginWithGoogle();
-  //   if(user){
-  //       setUser(user);
-  //       if (isNewUser) {
-  //           setView('profile-setup');
-  //       } else {
-  //           setView('game');
-  //       }
-  //   }
-  // };
-
-  // const logout = async () => {
-  //   await authService.logout();
-  //   setUser(null);
-  //   setView('game');
-  // };
-  
-  // const updateProfile = async (username: string, avatarId: string) => {
-  //   if(!user) throw new Error("User not logged in");
-  //   const updatedUser = await authService.updateProfile(user.id, username, avatarId);
-  //   setUser(updatedUser);
-  //   setView('game');
-  // };
-  
-  // --- REAL AUTH SERVICE (SUPABASE + .NET API) ---
-  // UNCOMMENT THIS BLOCK AND COMMENT OUT THE MOCK BLOCK ABOVE
   
   const hasFetchedProfile = useRef(false);
   const initializeAuth = useCallback(async () => {
@@ -150,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const profile = await apiService.getProfile(token);
             setUser({ id: session.user.id, email: session.user.email!, ...profile });
             setView('game');
+            logEvent('login', { method: 'email' });
         } catch (e) {
             setUser({ id: session.user.id, email: session.user.email!, username: '', avatarId: '' });
             setView('profile-setup');
@@ -168,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const profile = await apiService.updateProfile(token, username, avatarId);
         setUser({ id: session.user.id, email: session.user.email!, ...profile });
         setView('game');
+        logEvent('sign_up', { method: 'email' });
     } else {
         throw new Error("Signup successful, but no session returned. Please check your email for verification and log in.");
     }
@@ -179,6 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (user) {
+        logEvent('logout');
+    }
     await supabaseAuthService.logout();
     setUser(null);
     setView('game');
@@ -194,27 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setView('game');
   };
 
-  // const authService = USE_MOCK_AUTH ? mockAuthService : {
-  //     login,
-  //     signup,
-  //     loginWithGoogle,
-  //     logout,
-  //     updateProfile
-  // };
-
-  // const value = {
-  //   user,
-  //   loading,
-  //   view,
-  //   setView,
-  //   login: USE_MOCK_AUTH ? login : () => Promise.resolve(), // Replace with real login
-  //   signup: USE_MOCK_AUTH ? signup : () => Promise.resolve(), // Replace with real signup
-  //   loginWithGoogle: USE_MOCK_AUTH ? loginWithGoogle : () => Promise.resolve(), // Replace with real google login
-  //   logout,
-  //   updateProfile,
-  // };
-
-  // When you uncomment the block above, replace the `value` object with this:
   const value = {
     user,
     loading,
