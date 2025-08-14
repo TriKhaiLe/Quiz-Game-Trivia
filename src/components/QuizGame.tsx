@@ -88,7 +88,7 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd, topic, diffic
         difficulty,
         currentQuestionIndex: originalCurrentIndex,
       });
-      const url = `${window.location.origin}${window.location.pathname}#/quiz/${result.id}`;
+      const url = quizService.getShareableLink(result.id);
       setShareUrl(url);
       setShareState('shared');
     } catch (error) {

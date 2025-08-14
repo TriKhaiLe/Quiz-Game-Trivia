@@ -44,6 +44,10 @@ const realQuizService = {
     async getQuiz(id: string): Promise<GetQuizResponse> {
         const response = await fetch(`${API_BASE_URL}/api/quizzes/${id}`);
         return handleResponse(response);
+    },
+
+    getShareableLink(id: string): string {
+      return `${API_BASE_URL}/share/${id}`;
     }
 };
 
