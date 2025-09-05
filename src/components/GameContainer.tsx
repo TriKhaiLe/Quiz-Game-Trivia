@@ -9,6 +9,8 @@ import { generateQuizQuestions } from '../services/geminiService';
 import { logEvent } from '../services/analyticsService';
 import { quizService } from '../services/quizService';
 
+const hasInitialHash = () => window.location.hash.startsWith('#/quiz/') || window.location.hash.startsWith('#/result/');
+
 const GameContainer: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>('setup');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -17,9 +19,11 @@ const GameContainer: React.FC = () => {
   const [currentTopic, setCurrentTopic] = useState<string>('');
   const [currentDifficulty, setCurrentDifficulty] = useState<number>(0);
   const [startIndex, setStartIndex] = useState<number>(0);
+  const [isSharedView, setIsSharedView] = useState<boolean>(hasInitialHash());
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadSharedQuiz = useCallback(async (id: string) => {
+    setIsSharedView(true);
     setGameState('loading');
     setError(null);
     setQuestions([]);
@@ -38,11 +42,13 @@ const GameContainer: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.";
       setError(`Không thể tải quiz đã chia sẻ: ${errorMessage}`);
       setGameState('setup');
+      setIsSharedView(false);
       window.location.hash = ''; // Clear invalid hash
     }
   }, []);
 
   const loadSharedResult = useCallback(async (id: string) => {
+    setIsSharedView(true);
     setGameState('loading');
     setError(null);
     try {
@@ -60,6 +66,7 @@ const GameContainer: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.";
       setError(`Không thể tải kết quả đã chia sẻ: ${errorMessage}`);
       setGameState('setup');
+      setIsSharedView(false);
       window.location.hash = ''; // Clear invalid hash
     }
   }, []);
@@ -121,7 +128,7 @@ const GameContainer: React.FC = () => {
         console.log("Generation was cancelled by user. Ignoring error.");
         return;
       }
-
+      
       const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.";
       setError(errorMessage);
       setGameState('setup');
@@ -145,6 +152,7 @@ const GameContainer: React.FC = () => {
   }, [questions]);
 
   const handlePlayAgain = useCallback(() => {
+    setIsSharedView(false);
     setGameState('setup');
     setQuestions([]);
     setUserAnswers([]);
@@ -183,6 +191,7 @@ const GameContainer: React.FC = () => {
                   onPlayAgain={handlePlayAgain}
                   topic={currentTopic}
                   difficulty={currentDifficulty}
+                  isSharedView={isSharedView}
                 />;
       case 'setup':
       default:
