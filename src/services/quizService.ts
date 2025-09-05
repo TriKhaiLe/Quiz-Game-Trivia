@@ -1,6 +1,5 @@
 import type { QuizQuestion } from '../types';
 
-// --- Interfaces ---
 interface ShareQuizPayload {
     questions: QuizQuestion[];
     topic: string;
@@ -17,6 +16,20 @@ interface GetQuizResponse {
     topic: string;
     difficulty: number;
     startIndex: number;
+}
+
+interface ShareResultsPayload {
+    questions: QuizQuestion[];
+    userAnswers: string[];
+    topic: string;
+    difficulty: number;
+}
+
+interface GetResultsResponse {
+    questions: QuizQuestion[];
+    userAnswers: string[];
+    topic: string;
+    difficulty: number;
 }
 
 import { API_BASE_URL } from './apiConfig';
@@ -46,9 +59,25 @@ const realQuizService = {
         return handleResponse(response);
     },
 
-    getShareableLink(id: string): string {
-      return `${API_BASE_URL}/share/${id}`;
-    }
+    getShareableLink(id: string, type: 'quiz' | 'result'): string {
+      const path = type === 'quiz' ? 'share' : 'share-result';
+      return `${API_BASE_URL}/${path}/${id}`;
+    },
+
+    async shareResults(payload: ShareResultsPayload): Promise<ShareQuizResponse> {
+        const response = await fetch(`${API_BASE_URL}/api/results/share`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        return handleResponse(response);
+    },
+
+    async getResults(id: string): Promise<GetResultsResponse> {
+        const response = await fetch(`${API_BASE_URL}/api/results/${id}`);
+        return handleResponse(response);
+    },
+    
 };
 
 export const quizService = realQuizService;

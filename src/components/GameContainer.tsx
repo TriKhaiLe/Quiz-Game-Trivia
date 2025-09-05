@@ -18,7 +18,7 @@ const GameContainer: React.FC = () => {
   const [currentDifficulty, setCurrentDifficulty] = useState<number>(0);
   const [startIndex, setStartIndex] = useState<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   const loadSharedQuiz = useCallback(async (id: string) => {
     setGameState('loading');
     setError(null);
@@ -42,6 +42,28 @@ const GameContainer: React.FC = () => {
     }
   }, []);
 
+  const loadSharedResult = useCallback(async (id: string) => {
+    setGameState('loading');
+    setError(null);
+    try {
+      const { questions, userAnswers, topic, difficulty } = await quizService.getResults(id);
+      if (questions && userAnswers) {
+        setQuestions(questions);
+        setUserAnswers(userAnswers);
+        setCurrentTopic(topic);
+        setCurrentDifficulty(difficulty);
+        setGameState('results');
+      } else {
+        throw new Error("Shared result data is invalid.");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.";
+      setError(`Không thể tải kết quả đã chia sẻ: ${errorMessage}`);
+      setGameState('setup');
+      window.location.hash = ''; // Clear invalid hash
+    }
+  }, []);
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
@@ -50,6 +72,11 @@ const GameContainer: React.FC = () => {
         if (id) {
           loadSharedQuiz(id);
         }
+      } else if (hash.startsWith('/result/')) {
+        const id = hash.split('/')[2];
+        if (id) {
+          loadSharedResult(id);
+        }
       }
     };
     
@@ -57,13 +84,17 @@ const GameContainer: React.FC = () => {
     handleHashChange(); // Check on initial load
 
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [loadSharedQuiz]);
+  }, [loadSharedQuiz, loadSharedResult]);
 
   const handleStartGame = useCallback(async (topic: string, difficulty: number) => {
     logEvent('start_game', { 'topic': topic, 'difficulty': difficulty });
     setCurrentTopic(topic);
     setCurrentDifficulty(difficulty);
     setStartIndex(0);
+    // Clear hash if user starts a new game
+    if (window.location.hash) {
+      window.location.hash = '';
+    }
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -72,7 +103,7 @@ const GameContainer: React.FC = () => {
     setError(null);
     try {
       const quizData = await generateQuizQuestions(topic, difficulty, { signal: controller.signal });
-      
+
       if (controller.signal.aborted) {
         console.log("Generation was cancelled by user. Ignoring results.");
         return;
@@ -136,17 +167,23 @@ const GameContainer: React.FC = () => {
   const renderContent = () => {
     switch (gameState) {
       case 'loading':
-        return <Loader message="Đang tạo bộ câu hỏi, vui lòng chờ..." onCancel={handleCancelGeneration} />;
+        return <Loader message="Đang tải..." onCancel={handleCancelGeneration} />;
       case 'playing':
         return <QuizGame 
                   questions={questions} 
-                  onGameEnd={handleGameEnd}                   
+                  onGameEnd={handleGameEnd} 
                   topic={currentTopic}
                   difficulty={currentDifficulty}
                   startIndex={startIndex}
-/>;
+                />;
       case 'results':
-        return <QuizResults questions={questions} userAnswers={userAnswers} onPlayAgain={handlePlayAgain} />;
+        return <QuizResults 
+                  questions={questions} 
+                  userAnswers={userAnswers} 
+                  onPlayAgain={handlePlayAgain}
+                  topic={currentTopic}
+                  difficulty={currentDifficulty}
+                />;
       case 'setup':
       default:
         return <QuizSetup onStartGame={handleStartGame} />;

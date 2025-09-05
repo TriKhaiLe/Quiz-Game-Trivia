@@ -1,17 +1,26 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import type { QuizQuestion } from '../types';
 import { CheckIcon } from '../icons/CheckIcon';
 import { XIcon } from '../icons/XIcon';
 import { TrophyIcon } from '../icons/TrophyIcon';
+import { quizService } from '../services/quizService';
+import { ShareIcon } from '../icons/ShareIcon';
+import { CopyIcon } from '../icons/CopyIcon';
 
 
 interface QuizResultsProps {
   questions: QuizQuestion[];
   userAnswers: string[];
   onPlayAgain: () => void;
+  topic: string;
+  difficulty: number;
 }
 
-const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPlayAgain }) => {
+const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPlayAgain, topic, difficulty }) => {
+  const [shareState, setShareState] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
+  const [shareUrl, setShareUrl] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
+
   const score = questions.reduce((acc, question, index) => {
     return question.correctAnswer === userAnswers[index] ? acc + 1 : acc;
   }, 0);
@@ -23,6 +32,34 @@ const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPla
     if (percentage >= 50) return "Cũng không tệ, hãy cố gắng hơn nhé!";
     return "Cần cố gắng nhiều hơn!";
   }
+
+  const handleShareResults = useCallback(async () => {
+    setShareState('sharing');
+    try {
+      const result = await quizService.shareResults({
+        questions,
+        userAnswers,
+        topic,
+        difficulty,
+      });
+      
+      const url = quizService.getShareableLink(result.id, 'result');
+      setShareUrl(url);
+      setShareState('shared');
+    } catch (error) {
+      console.error("Failed to share results:", error);
+      setShareState('error');
+      setTimeout(() => setShareState('idle'), 3000);
+    }
+  }, [questions, userAnswers, topic, difficulty]);
+
+  const handleCopy = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    });
+  };
 
   return (
     <div className="flex flex-col items-center animate-fade-in">
@@ -55,12 +92,49 @@ const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPla
         })}
       </div>
 
-      <button
-        onClick={onPlayAgain}
-        className="w-full max-w-sm bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
-      >
-        Chơi lại
-      </button>
+      <div className="w-full max-w-sm flex flex-col gap-4 items-center">
+        <button
+          onClick={onPlayAgain}
+          className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
+        >
+          Chơi lại
+        </button>
+        
+        {/* Share Section */}
+        <div className="w-full h-10 flex items-center justify-center">
+          {shareState === 'idle' && (
+            <button
+              onClick={handleShareResults}
+              className="flex items-center gap-2 text-slate-400 hover:text-indigo-400 transition-colors"
+              title="Chia sẻ kết quả này"
+            >
+              <ShareIcon className="w-5 h-5" />
+              <span className="text-sm font-semibold">Chia sẻ kết quả</span>
+            </button>
+          )}
+          {shareState === 'sharing' && (
+            <div className="flex items-center gap-2 text-slate-400 animate-fade-in-fast">
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-400"></div>
+              <span className="text-sm">Đang tạo link...</span>
+            </div>
+          )}
+          {shareState === 'error' && (
+             <p className="text-sm text-red-400 animate-fade-in-fast">Lỗi khi chia sẻ!</p>
+           )}
+          {shareState === 'shared' && (
+            <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700 w-full animate-fade-in-fast">
+              <input type="text" value={shareUrl} readOnly className="bg-transparent text-sm text-slate-300 w-full focus:outline-none px-2" />
+              <button
+                onClick={handleCopy}
+                className="p-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex-shrink-0"
+                title={copySuccess ? 'Đã sao chép!' : 'Sao chép link'}
+              >
+                {copySuccess ? <CheckIcon className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

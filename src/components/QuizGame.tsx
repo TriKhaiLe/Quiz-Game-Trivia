@@ -12,7 +12,6 @@ interface QuizGameProps {
   topic: string;
   difficulty: number;
   startIndex?: number;
-
 }
 
 const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd, topic, difficulty, startIndex = 0 }) => {
@@ -88,7 +87,8 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd, topic, diffic
         difficulty,
         currentQuestionIndex: originalCurrentIndex,
       });
-      const url = quizService.getShareableLink(result.id);
+      
+      const url = quizService.getShareableLink(result.id, 'quiz');
       setShareUrl(url);
       setShareState('shared');
     } catch (error) {
@@ -198,14 +198,14 @@ const QuizGame: React.FC<QuizGameProps> = ({ questions, onGameEnd, topic, diffic
 
         {/* Next Button Area (Right) */}
         <div className="flex justify-end">
-        {isAnswered && (
+          {isAnswered && (
             <button
                 onClick={handleNextQuestion}
                 className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 animate-fade-in"
             >
                 {isLastQuestion ? 'Xem kết quả' : 'Câu tiếp theo'}
             </button>
-        )}
+          )}
         </div>
       </div>
     </div>
