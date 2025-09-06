@@ -95,6 +95,7 @@ const GameContainer: React.FC = () => {
 
   const handleStartGame = useCallback(async (topic: string, difficulty: number) => {
     logEvent('start_game', { 'topic': topic, 'difficulty': difficulty });
+    setIsSharedView(false);
     setCurrentTopic(topic);
     setCurrentDifficulty(difficulty);
     setStartIndex(0);
@@ -128,7 +129,6 @@ const GameContainer: React.FC = () => {
         console.log("Generation was cancelled by user. Ignoring error.");
         return;
       }
-      
       const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi không xác định.";
       setError(errorMessage);
       setGameState('setup');
@@ -162,6 +162,16 @@ const GameContainer: React.FC = () => {
       window.location.hash = '';
     }
   }, []);
+  
+  const handleReplayQuiz = useCallback(() => {
+    setUserAnswers([]);
+    setStartIndex(0);
+    setGameState('playing');
+    setIsSharedView(false); // Go back to normal mode
+    if (window.location.hash) {
+      window.location.hash = ''; // Clear the URL
+    }
+  }, []);
 
   const handleCancelGeneration = useCallback(() => {
     if (abortControllerRef.current) {
@@ -175,7 +185,7 @@ const GameContainer: React.FC = () => {
   const renderContent = () => {
     switch (gameState) {
       case 'loading':
-        return <Loader message="Đang tải..." onCancel={handleCancelGeneration} />;
+        return <Loader message="Đang tải..." />;
       case 'playing':
         return <QuizGame 
                   questions={questions} 
@@ -189,6 +199,7 @@ const GameContainer: React.FC = () => {
                   questions={questions} 
                   userAnswers={userAnswers} 
                   onPlayAgain={handlePlayAgain}
+                  onReplayQuiz={handleReplayQuiz}
                   topic={currentTopic}
                   difficulty={currentDifficulty}
                   isSharedView={isSharedView}

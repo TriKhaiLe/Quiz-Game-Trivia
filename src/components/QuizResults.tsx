@@ -11,12 +11,13 @@ interface QuizResultsProps {
   questions: QuizQuestion[];
   userAnswers: string[];
   onPlayAgain: () => void;
+  onReplayQuiz: () => void;
   topic: string;
   difficulty: number;
   isSharedView?: boolean;
 }
 
-const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPlayAgain, topic, difficulty, isSharedView = false }) => {
+const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPlayAgain, onReplayQuiz, topic, difficulty, isSharedView = false }) => {
   const [shareState, setShareState] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
   const [shareUrl, setShareUrl] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
@@ -93,12 +94,29 @@ const QuizResults: React.FC<QuizResultsProps> = ({ questions, userAnswers, onPla
       </div>
 
       <div className="w-full max-w-sm flex flex-col gap-4 items-center">
-        <button
-          onClick={onPlayAgain}
-          className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
-        >
-          Chơi lại
-        </button>
+        {isSharedView ? (
+          <>
+            <button
+              onClick={onReplayQuiz}
+              className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
+            >
+              Chơi lại quiz này
+            </button>
+            <button
+              onClick={onPlayAgain}
+              className="w-full bg-slate-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-700 transition-all"
+            >
+              Tạo quiz mới
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={onPlayAgain}
+            className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105"
+          >
+            Chơi lại
+          </button>
+        )}
         
         {/* Share Section */}
         {!isSharedView && (
