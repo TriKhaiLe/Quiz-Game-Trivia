@@ -185,7 +185,7 @@ const GameContainer: React.FC = () => {
   const renderContent = () => {
     switch (gameState) {
       case 'loading':
-        return <Loader message="Đang tải..." />;
+        return <Loader message="Đang tải..." onCancel={handleCancelGeneration} />;
       case 'playing':
         return <QuizGame 
                   questions={questions} 
